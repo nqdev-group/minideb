@@ -1,0 +1,16 @@
+name: minideb
+id: ari:cloud:compass:d080ee26-f21d-4730-84de-98c025104c05:component/e09ef9ad-8d69-4877-b0ee-7395c9ca13a3/8d1389b4-14b3-46b6-802d-8ba000a39749
+description: null
+configVersion: 1
+typeId: SERVICE
+fields:
+  tier: 4
+links:
+  - name: null
+    type: REPOSITORY
+    url: https://github.com/nqdev-group/minideb
+relationships:
+  DEPENDS_ON: []
+labels:
+  - source:github
+customFields: null
