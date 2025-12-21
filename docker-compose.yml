@@ -7,11 +7,12 @@
 
 services:
   minideb:
-    container_name: minideb
+    container_name: nqdev-minideb-trixie
     build:
       context: .
       dockerfile: Dockerfile
-    image: minideb:latest
+    # image: nqdev/minideb-trixie:12.0.0
+    image: nqdev/minideb-trixie:latest
     restart: unless-stopped
     network_mode: host
     # ports:
@@ -22,15 +23,15 @@ services:
       - TZ=Asia/Ho_Chi_Minh
     # env_file:
     #   - .env
-    volumes:
-      - minideb-data:/data
+    # volumes:
+    #   - minideb-data:/data
     # depends_on:
     #   mongodb:
     #     condition: service_healthy
     extra_hosts:
       - "host.docker.internal:host-gateway" # Để kết nối đến localhost của host từ container
-    networks:
-      - minideb-net
+    # networks:
+    #   - minideb-net
     # healthcheck:
     #   test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
     #   interval: 30s
@@ -45,10 +46,10 @@ services:
     #     reservations:
     #       memory: "256M" # Đảm bảo container có ít nhất 256MB RAM
 
-volumes:
-  # minideb-data:
-  #   driver: local
+# volumes:
+#   minideb-data:
+#     driver: local
 
-networks:
-  minideb-net:
-    driver: bridge
+# networks:
+#   minideb-net:
+#     driver: bridge
