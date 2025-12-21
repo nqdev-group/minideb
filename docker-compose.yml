@@ -1,0 +1,20 @@
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# Docker Compose configuration for MiniDeb environment
+# -----------------------------------------
+# START: docker-compose up -d --build --force-recreate --remove-orphans
+# STOP: docker-compose down -v
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+services:
+  minideb:
+    container_name: minideb
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: minideb:latest
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./shared:/shared
+    networks:
+      - minideb-net
