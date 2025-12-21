@@ -16,31 +16,27 @@ ENV TZ=Asia/Ho_Chi_Minh \
   LC_ALL=C.UTF-8 \
   NQDEV_HOME=/nqdev
 
-# Install common packages
-RUN install_packages \
+# Install runtime packages + cleanup in single layer
+RUN set -eux; \
+  install_packages \
   ca-certificates \
   tzdata \
   curl \
   bash \
-  tini \
-  && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
-  && echo $TZ > /etc/timezone \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+  tini; \
+  ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime; \
+  echo "${TZ}" > /etc/timezone; \
+  apt-get purge --auto-remove -y; \
+  apt-get clean; \
+  rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Create nqdev group & user
-RUN groupadd -g 10001 nqdev \
-  && useradd -u 10001 -g nqdev -m -d /home/nqdev -s /bin/bash nqdev
-
-# Create base directory structure
-RUN mkdir -p \
-  # ${NQDEV_HOME}/bin \
-  # ${NQDEV_HOME}/apps \
-  # ${NQDEV_HOME}/data \
-  # ${NQDEV_HOME}/logs \
-  ${NQDEV_HOME}/tmp \
-  && chown -R nqdev:nqdev ${NQDEV_HOME} \
-  && chmod 755 ${NQDEV_HOME}
+# Create non-root user & directories
+RUN set -eux; \
+  groupadd -g 10001 nqdev; \
+  useradd  -u 10001 -g nqdev -m -d /home/nqdev -s /bin/bash nqdev; \
+  mkdir -p ${NQDEV_HOME}/tmp; \
+  chown -R nqdev:nqdev ${NQDEV_HOME}; \
+  chmod 755 ${NQDEV_HOME}
 
 WORKDIR ${NQDEV_HOME}
 
