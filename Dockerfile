@@ -34,10 +34,10 @@ RUN groupadd -g 10001 nqdev \
 
 # Create base directory structure
 RUN mkdir -p \
-  ${NQDEV_HOME}/bin \
-  ${NQDEV_HOME}/apps \
-  ${NQDEV_HOME}/data \
-  ${NQDEV_HOME}/logs \
+  # ${NQDEV_HOME}/bin \
+  # ${NQDEV_HOME}/apps \
+  # ${NQDEV_HOME}/data \
+  # ${NQDEV_HOME}/logs \
   ${NQDEV_HOME}/tmp \
   && chown -R nqdev:nqdev ${NQDEV_HOME} \
   && chmod 755 ${NQDEV_HOME}
