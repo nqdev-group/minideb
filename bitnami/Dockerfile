@@ -1,4 +1,8 @@
-ARG BASE_IMAGE=debian:12-slim
+# Use the official Bitnami Minideb as a base image
+# trixie: Debian 12
+# bookworm: Debian 11
+# bullseye: Debian 10
+ARG BASE_IMAGE=bitnami/minideb:trixie
 
 FROM ${BASE_IMAGE}
 

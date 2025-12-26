@@ -1,0 +1,55 @@
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# Docker Compose configuration for MiniDeb environment
+# -----------------------------------------
+# START: docker-compose up -d --build --force-recreate --remove-orphans
+# STOP: docker-compose down -v
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+services:
+  minideb:
+    container_name: nqdev-minideb-trixie
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # image: nqdev/minideb-trixie:12.0.0
+    image: nqdev/minideb-trixie:latest
+    restart: unless-stopped
+    network_mode: host
+    # ports:
+    #   - "80:80"
+    stdin_open: true
+    tty: true
+    environment:
+      - TZ=Asia/Ho_Chi_Minh
+    # env_file:
+    #   - .env
+    # volumes:
+    #   - minideb-data:/data
+    # depends_on:
+    #   mongodb:
+    #     condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # Để kết nối đến localhost của host từ container
+    # networks:
+    #   - minideb-net
+    # healthcheck:
+    #   test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+    #   interval: 30s
+    #   timeout: 3s
+    #   retries: 3
+    #   start_period: 10s
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: "0.50" # Giới hạn 80% CPU
+    #       memory: "1G" # Giới hạn 3.2GB RAM (80% của 4GB)
+    #     reservations:
+    #       memory: "256M" # Đảm bảo container có ít nhất 256MB RAM
+
+# volumes:
+#   minideb-data:
+#     driver: local
+
+# networks:
+#   minideb-net:
+#     driver: bridge
