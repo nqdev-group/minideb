@@ -14,7 +14,9 @@
 # ================================
 FROM debian:12-slim
 
-ARG VERSION="12.1.0"
+# Pass ARG version dynamically at runtime
+ARG VERSION="12.1.0" \
+  DEBIAN_FRONTEND="noninteractive"
 
 LABEL maintainer="QuyIT Platform <info@quyit.id.vn>" \
   org.opencontainers.image.title="nqdev-debian-base" \
@@ -25,12 +27,16 @@ LABEL maintainer="QuyIT Platform <info@quyit.id.vn>" \
   org.opencontainers.image.version="${VERSION}"
 
 # -------------------------------
-# Environment
+# Environment variable setup (global config)
 # -------------------------------
 ENV TZ=Asia/Ho_Chi_Minh \
   LANG=C.UTF-8 \
   LC_ALL=C.UTF-8 \
-  NQDEV_HOME=/nqdev
+  NQDEV_HOME=/nqdev \
+  APP_USER=nqdev \
+  APP_UID=10001 \
+  APP_GID=10001 \
+  rootfsDir=/nqdev/rootfs
 
 # -------------------------------
 # System packages (minimal)
@@ -38,6 +44,7 @@ ENV TZ=Asia/Ho_Chi_Minh \
 # Install runtime packages + cleanup in single layer
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
+  debian-archive-keyring jq dpkg-dev gnupg apt-transport-https gpg \
   ca-certificates \
   tzdata \
   curl \
@@ -48,19 +55,6 @@ RUN apt-get update \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
-RUN set -eux; \
-  install_packages \
-  ca-certificates \
-  tzdata \
-  curl \
-  bash \
-  tini; \
-  ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime; \
-  echo "${TZ}" > /etc/timezone; \
-  apt-get purge --auto-remove -y; \
-  apt-get clean; \
-  rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
 # -------------------------------
 # Non-root user
 # -------------------------------
@@ -68,15 +62,26 @@ ARG APP_USER=nqdev \
   APP_UID=10001 \
   APP_GID=10001
 
-# Create non-root user & directories
+# Create non-root user & setup directories
 RUN set -eux; \
   groupadd -g ${APP_GID} ${APP_USER}; \
   useradd  -u ${APP_UID} -g ${APP_USER} -m -d /home/${APP_USER} -s /bin/bash ${APP_USER}; \
   mkdir -p ${NQDEV_HOME}/tmp; \
+  mkdir -p ${rootfsDir}/usr/sbin; \
   chown -R ${APP_USER}:${APP_USER} ${NQDEV_HOME}; \
   # Security hardening
   chmod 755 /home/${APP_USER}; \
-  chmod 755 ${NQDEV_HOME};
+  chmod 755 ${NQDEV_HOME}; \
+  chmod 755 ${rootfsDir}/usr/sbin;
+
+# -------------------------------
+# Copy scripts & assign permissions
+# -------------------------------
+COPY scripts ${NQDEV_HOME}/scripts/
+RUN set -eux; \
+  chmod 0755 ${NQDEV_HOME}/scripts/*.sh; \
+  chmod +x ${NQDEV_HOME}/scripts/*.sh; \
+  find ${NQDEV_HOME}/scripts -type f -exec ln -s {} ${rootfsDir}/usr/sbin/ \;
 
 # -------------------------------
 # Runtime defaults

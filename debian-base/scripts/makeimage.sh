@@ -22,10 +22,6 @@ cp -a "${ROOT}/debootstrap/"* "${DEBOOTSTRAP_DIR}/scripts"
 
 KEYRING=$DEBOOTSTRAP_DIR/debian-archive-keyring.gpg
 
-use_qemu_static() {
-    [[ "$PLATFORM" == "arm64" && ! ( "$(uname -m)" == *arm* || "$(uname -m)" == *aarch64* ) ]]
-}
-
 export DEBIAN_FRONTEND=noninteractive
 
 DIRS_TO_TRIM="/usr/share/man
@@ -39,13 +35,9 @@ DIRS_TO_TRIM="/usr/share/man
 
 debootstrap_arch_args=( )
 
-if use_qemu_static ; then
-    debootstrap_arch_args+=( --arch "$PLATFORM" )
-fi
-
 rootfsDir=$(mktemp -d)
 echo "Building base in $rootfsDir"
-DEBOOTSTRAP_DIR="$DEBOOTSTRAP_DIR" debootstrap "${debootstrap_arch_args[@]}"  --keyring "$KEYRING" --variant container --foreign "${DIST}" "$rootfsDir"
+DEBOOTSTRAP_DIR="$DEBOOTSTRAP_DIR" debootstrap "${debootstrap_arch_args[@]}" --keyring "$KEYRING" --variant container --foreign "${DIST}" "$rootfsDir"
 
 # get path to "chroot" in our current PATH
 chrootPath="$(type -P chroot)"
@@ -54,20 +46,7 @@ rootfs_chroot() {
     # set PATH and chroot away!
     PATH='/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin' \
             "$chrootPath" "$rootfsDir" "$@"
-
 }
-
-if use_qemu_static ; then
-    echo "Setting up qemu static in chroot"
-    usr_bin_modification_time=$(stat -c %y "$rootfsDir"/usr/bin)
-    if [ -f "/usr/bin/qemu-aarch64-static" ]; then
-        find /usr/bin/ -type f -name 'qemu-*-static' -exec cp {} "$rootfsDir"/usr/bin/. \;
-    else
-        echo "Cannot find aarch64 qemu static. Aborting..." >&2
-        exit 1
-    fi
-    touch -d "$usr_bin_modification_time" "$rootfsDir"/usr/bin
-fi
 
 rootfs_chroot bash debootstrap/debootstrap --second-stage
 
@@ -96,7 +75,6 @@ echo "Applying docker-specific tweaks"
 #     This was sometimes wrongly detected as not applying, and we aren't
 #     interested in building versions that this guard would apply to,
 #     so simply apply the tweak unconditionally.
-
 
 # prevent init scripts from running during install/update
 echo >&2 "+ echo exit 101 > '$rootfsDir/usr/sbin/policy-rc.d'"
@@ -252,7 +230,6 @@ set +o pipefail
 BUILD_DATE="$(find "$rootfsDir/usr/share/doc" -name changelog.Debian.gz -print0 | xargs -0 -n1 -I{} dpkg-parsechangelog -SDate -l'{}' | xargs -l -i date --date="{}" +%s | sort -n | tail -n 1)"
 set -o pipefail
 
-
 echo "Trimming down"
 for DIR in $DIRS_TO_TRIM; do
   rm -r "${rootfsDir:?rootfsDir cannot be empty}/$DIR"/*
@@ -281,13 +258,6 @@ chroot "$rootfsDir" dpkg-query -W -f '${Package} ${Installed-Size}\n'
 echo "Largest dirs"
 du "$rootfsDir" | sort -n | tail -n 20
 echo "Built in $rootfsDir"
-
-if use_qemu_static ; then
-    echo "Cleaning up qemu static files from image"
-    usr_bin_modification_time=$(stat -c %y "$rootfsDir"/usr/bin)
-    rm -rf "$rootfsDir"/usr/bin/qemu-*-static
-    touch -d "$usr_bin_modification_time" "$rootfsDir"/usr/bin
-fi
 
 tar cf "$TARGET" -C "$rootfsDir" .
 rm -r "$rootfsDir"
